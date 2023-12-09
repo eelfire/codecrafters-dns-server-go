@@ -13,15 +13,15 @@ func main() {
 	fmt.Println("Logs from your program will appear here!")
 
 	// fmt.Println(GenDnsHeaderResponse(NewDnsHeader()))
-	dnsMessage := DnsMessage{
-		hdr:  NewHeader(),
-		ques: NewQuestion(),
-		ans:  NewAnswer(),
-	}
-	msg := GenDnsRespone(dnsMessage)
-	fmt.Println(msg)
-	fmt.Println(string(msg))
-	fmt.Printf("%x\n", msg)
+	// dnsMessage := DnsMessage{
+	// 	hdr:  NewHeader(),
+	// 	ques: NewQuestion(),
+	// 	ans:  NewAnswer(),
+	// }
+	// msg := GenDnsRespone(dnsMessage)
+	// fmt.Println(msg)
+	// fmt.Println(string(msg))
+	// fmt.Printf("%x\n", msg)
 	// fmt.Println(byte(69))
 	// fmt.Printf("%x\n", byte(69))
 
