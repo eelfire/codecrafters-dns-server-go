@@ -13,15 +13,15 @@ func main() {
 	fmt.Println("Logs from your program will appear here!")
 
 	// fmt.Println(GenDnsHeaderResponse(NewDnsHeader()))
-	// dnsMessage := DnsMessage{
-	// 	hdr:  NewHeader(),
-	// 	ques: NewQuestion(),
-	// 	ans:  NewAnswer(),
-	// }
-	// msg := GenDnsRespone(dnsMessage)
-	// fmt.Println(msg)
-	// fmt.Println(string(msg))
-	// fmt.Printf("%x\n", msg)
+	dnsMessage := DnsMessage{
+		hdr:  NewHeader(),
+		ques: NewQuestion(),
+		ans:  NewAnswer(),
+	}
+	msg := GenDnsRespone(dnsMessage)
+	fmt.Println(msg)
+	fmt.Println(string(msg))
+	fmt.Printf("%x\n", msg)
 	// fmt.Println(byte(69))
 	// fmt.Printf("%x\n", byte(69))
 
@@ -177,10 +177,10 @@ func NewAnswer() Answer {
 func GenDnsAnswerResponse(ans Answer) []byte {
 	resp := []byte{}
 	resp = append(resp, EncodeName(ans.name)...)
-	resp = append(resp, byte(ans.typ)) // Convert [2]byte to []byte
-	resp = append(resp, byte(ans.class))
-	resp = append(resp, byte(ans.ttl))
-	resp = append(resp, byte(ans.rdlength))
+	resp = append(resp, byte(ans.typ>>8), byte(ans.typ)) // Convert [2]byte to []byte
+	resp = append(resp, byte(ans.class>>8), byte(ans.class))
+	resp = append(resp, byte(ans.ttl>>24), byte(ans.ttl>>16), byte(ans.ttl>>8), byte(ans.ttl))
+	resp = append(resp, byte(ans.rdlength>>8), byte(ans.rdlength))
 	resp = append(resp, ans.rdata...)
 	return resp
 
