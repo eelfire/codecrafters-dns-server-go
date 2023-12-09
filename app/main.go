@@ -138,10 +138,10 @@ func GenDnsQuestionResponse(ques Question) []byte {
 
 type Answer struct {
 	name     string
-	typ      [2]byte
-	class    [2]byte
-	ttl      [4]byte
-	rdlength [2]byte
+	typ      uint16
+	class    uint16
+	ttl      uint32
+	rdlength uint16
 	rdata    []byte
 }
 
@@ -158,10 +158,10 @@ func EncodeIp(ip string) []byte {
 func NewAnswer() Answer {
 	return Answer{
 		name:     "codecrafters.io",
-		typ:      [2]byte{0, 1},
-		class:    [2]byte{0, 1},
-		ttl:      [4]byte{4, 5},
-		rdlength: [2]byte{0, 4},
+		typ:      1,
+		class:    1,
+		ttl:      69,
+		rdlength: 4,
 		rdata:    EncodeIp("8.8.8.8"),
 	}
 }
@@ -169,10 +169,10 @@ func NewAnswer() Answer {
 func GenDnsAnswerResponse(ans Answer) []byte {
 	resp := []byte{}
 	resp = append(resp, []byte(ans.name)...)
-	resp = append(resp, ans.typ[:]...) // Convert [2]byte to []byte
-	resp = append(resp, ans.class[:]...)
-	resp = append(resp, ans.ttl[:]...)
-	resp = append(resp, ans.rdlength[:]...)
+	resp = append(resp, byte(ans.typ)) // Convert [2]byte to []byte
+	resp = append(resp, byte(ans.class))
+	resp = append(resp, byte(ans.ttl))
+	resp = append(resp, byte(ans.rdlength))
 	resp = append(resp, ans.rdata...)
 	return resp
 }
