@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -14,11 +15,14 @@ func main() {
 	// dnsMessage := DnsMessage{
 	// 	hdr:  NewHeader(),
 	// 	ques: NewQuestion(),
+	// 	ans:  NewAnswer(),
 	// }
 	// msg := GenDnsRespone(dnsMessage)
 	// fmt.Println(msg)
 	// fmt.Println(string(msg))
 	// fmt.Printf("%x\n", msg)
+	// fmt.Println(byte(69))
+	// fmt.Printf("%x\n", byte(69))
 
 	udpAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:2053")
 	if err != nil {
@@ -49,8 +53,10 @@ func main() {
 		dnsMessage := DnsMessage{
 			hdr:  NewHeader(),
 			ques: NewQuestion(),
+			ans:  NewAnswer(),
 		}
 		dnsMessage.hdr.qdcount += 1
+		dnsMessage.hdr.ancount += 1
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 
@@ -82,14 +88,21 @@ func NewHeader() DnsHeader {
 }
 
 func GenDnsHeaderResponse(hdr DnsHeader) []byte {
-	resp := []byte{
-		byte(hdr.id >> 8), byte(hdr.id), // split uint16 into two bytes
-		hdr.flags[0], hdr.flags[1],
-		byte(hdr.qdcount >> 8), byte(hdr.qdcount),
-		byte(hdr.ancount >> 8), byte(hdr.ancount),
-		byte(hdr.nscount >> 8), byte(hdr.nscount),
-		byte(hdr.arcount >> 8), byte(hdr.arcount),
-	}
+	// resp := []byte{
+	// 	byte(hdr.id >> 8), byte(hdr.id), // split uint16 into two bytes
+	// 	hdr.flags[0], hdr.flags[1],
+	// 	byte(hdr.qdcount >> 8), byte(hdr.qdcount),
+	// 	byte(hdr.ancount >> 8), byte(hdr.ancount),
+	// 	byte(hdr.nscount >> 8), byte(hdr.nscount),
+	// 	byte(hdr.arcount >> 8), byte(hdr.arcount),
+	// }
+	resp := []byte{}
+	resp = append(resp, byte(hdr.id))
+	resp = append(resp, hdr.flags[:]...)
+	resp = append(resp, byte(hdr.qdcount))
+	resp = append(resp, byte(hdr.ancount))
+	resp = append(resp, byte(hdr.nscount))
+	resp = append(resp, byte(hdr.arcount))
 	return resp
 }
 
@@ -123,12 +136,58 @@ func GenDnsQuestionResponse(ques Question) []byte {
 	return resp
 }
 
+type Answer struct {
+	name     string
+	typ      [2]byte
+	class    [2]byte
+	ttl      [4]byte
+	rdlength [2]byte
+	rdata    []byte
+}
+
+func EncodeIp(ip string) []byte {
+	split := strings.Split(ip, ".")
+	resp := make([]byte, 4)
+	for i := 0; i < 4; i++ {
+		val, _ := strconv.Atoi(split[i])
+		resp[i] = byte(val)
+	}
+	return resp
+}
+
+func NewAnswer() Answer {
+	return Answer{
+		name:     "codecrafters.io",
+		typ:      [2]byte{byte(1)},
+		class:    [2]byte{byte(1)},
+		ttl:      [4]byte{byte(69)},
+		rdlength: [2]byte{byte(4)},
+		rdata:    EncodeIp("8.8.8.8"),
+	}
+}
+
+func GenDnsAnswerResponse(ans Answer) []byte {
+	resp := []byte{}
+	resp = append(resp, []byte(ans.name)...)
+	resp = append(resp, ans.typ[:]...) // Convert [2]byte to []byte
+	resp = append(resp, ans.class[:]...)
+	resp = append(resp, ans.ttl[:]...)
+	resp = append(resp, ans.rdlength[:]...)
+	resp = append(resp, ans.rdata...)
+	return resp
+}
+
 type DnsMessage struct {
 	hdr  DnsHeader
 	ques Question
+	ans  Answer
 }
 
 func GenDnsRespone(msg DnsMessage) []byte {
-	resp := append(GenDnsHeaderResponse(msg.hdr), GenDnsQuestionResponse(msg.ques)...)
+	resp := []byte{}
+	resp = append(resp, GenDnsHeaderResponse(msg.hdr)...)
+	resp = append(resp, GenDnsQuestionResponse(msg.ques)...)
+	resp = append(resp, GenDnsAnswerResponse(msg.ans)...)
+
 	return resp
 }
