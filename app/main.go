@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 	"strconv"
@@ -12,15 +13,15 @@ func main() {
 	fmt.Println("Logs from your program will appear here!")
 
 	// fmt.Println(GenDnsHeaderResponse(NewDnsHeader()))
-	dnsMessage := DnsMessage{
-		hdr:  NewHeader(),
-		ques: NewQuestion(),
-		ans:  NewAnswer(),
-	}
-	msg := GenDnsRespone(dnsMessage)
-	fmt.Println(msg)
-	fmt.Println(string(msg))
-	fmt.Printf("%x\n", msg)
+	// dnsMessage := DnsMessage{
+	// 	hdr:  NewHeader(),
+	// 	ques: NewQuestion(),
+	// 	ans:  NewAnswer(),
+	// }
+	// msg := GenDnsRespone(dnsMessage)
+	// fmt.Println(msg)
+	// fmt.Println(string(msg))
+	// fmt.Printf("%x\n", msg)
 	// fmt.Println(byte(69))
 	// fmt.Printf("%x\n", byte(69))
 
@@ -156,13 +157,18 @@ func EncodeIp(ip string) []byte {
 }
 
 func NewAnswer() Answer {
+	var RData [4]byte
+	ip := uint32(0x08080808) // IP address: 8.8.8.8
+	binary.BigEndian.PutUint32(RData[:], ip)
 	return Answer{
 		name:     "codecrafters.io",
 		typ:      1,
 		class:    1,
 		ttl:      69,
 		rdlength: 4,
-		rdata:    EncodeIp("8.8.8.8"),
+		// rdata:    EncodeIp("8.8.8.8"),
+		rdata: []byte{8, 8, 8, 8},
+		// rdata: RData[:],
 	}
 }
 
@@ -175,6 +181,10 @@ func GenDnsAnswerResponse(ans Answer) []byte {
 	resp = append(resp, byte(ans.rdlength))
 	resp = append(resp, ans.rdata...)
 	return resp
+
+	// buff := new(bytes.Buffer)
+	// binary.Write(buff, binary.BigEndian, ans)
+	// return buff.Bytes()
 }
 
 type DnsMessage struct {
