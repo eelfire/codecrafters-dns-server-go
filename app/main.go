@@ -59,7 +59,7 @@ func main() {
 		}
 		dnsMessage.hdr.id = binary.BigEndian.Uint16(buf[0:2])
 		// mask := // 01111001 00000000
-		opcode := byte((buf[2] << 1) >> 3)
+		opcode := byte((buf[2] << 1) >> 4)
 		var rcode byte
 		if opcode == 0 {
 			rcode = 0
