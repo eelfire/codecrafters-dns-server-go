@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -10,6 +11,14 @@ func main() {
 	fmt.Println("Logs from your program will appear here!")
 
 	// fmt.Println(GenDnsHeaderResponse(NewDnsHeader()))
+	// dnsMessage := DnsMessage{
+	// 	hdr:  NewHeader(),
+	// 	ques: NewQuestion(),
+	// }
+	// msg := GenDnsRespone(dnsMessage)
+	// fmt.Println(msg)
+	// fmt.Println(string(msg))
+	// fmt.Printf("%x\n", msg)
 
 	udpAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:2053")
 	if err != nil {
@@ -37,7 +46,11 @@ func main() {
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
 
 		// Create an empty response
-		response := GenDnsHeaderResponse(NewDnsHeader())
+		dnsMessage := DnsMessage{
+			hdr:  NewHeader(),
+			ques: NewQuestion(),
+		}
+		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 
 		_, err = udpConn.WriteToUDP(response, source)
@@ -56,7 +69,7 @@ type DnsHeader struct {
 	arcount uint16  // 16 bits
 }
 
-func NewDnsHeader() DnsHeader {
+func NewHeader() DnsHeader {
 	return DnsHeader{
 		id:      1234,
 		flags:   [2]byte{1 << 7, 0},
@@ -79,6 +92,42 @@ func GenDnsHeaderResponse(hdr DnsHeader) []byte {
 	return resp
 }
 
-// type DnsMessage struct {
-// 	hdr DnsHeader
-// }
+type Question struct {
+	name  string
+	typ   [2]byte
+	class [2]byte
+}
+
+func NewQuestion() Question {
+	return Question{
+		name:  "codecrafters.io",
+		typ:   [2]byte{0, 1},
+		class: [2]byte{0, 1},
+	}
+}
+
+func EncodeName(name string) []byte {
+	split := strings.Split(name, ".")
+	resp := []byte{}
+	for i := 0; i < len(split); i++ {
+		resp = append(resp, byte(len(split[i])))
+		resp = append(resp, []byte(split[i])...)
+	}
+	resp = append(resp, byte(00))
+	return resp
+}
+
+func GenDnsQuestionResponse(ques Question) []byte {
+	resp := append(EncodeName(ques.name), ques.typ[0], ques.typ[1], ques.class[0], ques.class[1])
+	return resp
+}
+
+type DnsMessage struct {
+	hdr  DnsHeader
+	ques Question
+}
+
+func GenDnsRespone(msg DnsMessage) []byte {
+	resp := append(GenDnsHeaderResponse(msg.hdr), GenDnsQuestionResponse(msg.ques)...)
+	return resp
+}
