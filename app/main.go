@@ -61,7 +61,7 @@ func main() {
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 
-		fmt.Printf("%x\n", response)
+		// fmt.Printf("%x\n", response)
 
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
