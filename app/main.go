@@ -50,6 +50,7 @@ func main() {
 			hdr:  NewHeader(),
 			ques: NewQuestion(),
 		}
+		dnsMessage.hdr.qdcount += 1
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 
