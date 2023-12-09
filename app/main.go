@@ -176,7 +176,7 @@ func NewAnswer() Answer {
 
 func GenDnsAnswerResponse(ans Answer) []byte {
 	resp := []byte{}
-	resp = append(resp, []byte(ans.name)...)
+	resp = append(resp, EncodeName(ans.name)...)
 	resp = append(resp, byte(ans.typ)) // Convert [2]byte to []byte
 	resp = append(resp, byte(ans.class))
 	resp = append(resp, byte(ans.ttl))
