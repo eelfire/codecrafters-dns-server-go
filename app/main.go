@@ -48,7 +48,7 @@ func main() {
 		}
 
 		receivedData := string(buf[:size])
-		fmt.Printf("%x\n", buf[:size])
+		// fmt.Printf("%x\n", buf[:size])
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
 
 		// Create an empty response
@@ -57,6 +57,16 @@ func main() {
 			ques: NewQuestion(),
 			ans:  NewAnswer(),
 		}
+		dnsMessage.hdr.id = binary.BigEndian.Uint16(buf[0:2])
+		// mask := // 01111001 00000000
+		opcode := byte(buf[2] << 1 >> 3)
+		var rcode byte
+		if opcode == 0 {
+			rcode = 0
+		} else {
+			rcode = 4
+		}
+		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 129), rcode}
 		dnsMessage.hdr.qdcount += 1
 		dnsMessage.hdr.ancount += 1
 		response := GenDnsRespone(dnsMessage)
