@@ -61,6 +61,8 @@ func main() {
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 
+		fmt.Printf("%x\n", response)
+
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)
@@ -89,21 +91,21 @@ func NewHeader() DnsHeader {
 }
 
 func GenDnsHeaderResponse(hdr DnsHeader) []byte {
-	// resp := []byte{
-	// 	byte(hdr.id >> 8), byte(hdr.id), // split uint16 into two bytes
-	// 	hdr.flags[0], hdr.flags[1],
-	// 	byte(hdr.qdcount >> 8), byte(hdr.qdcount),
-	// 	byte(hdr.ancount >> 8), byte(hdr.ancount),
-	// 	byte(hdr.nscount >> 8), byte(hdr.nscount),
-	// 	byte(hdr.arcount >> 8), byte(hdr.arcount),
-	// }
-	resp := []byte{}
-	resp = append(resp, byte(hdr.id))
-	resp = append(resp, hdr.flags[:]...)
-	resp = append(resp, byte(hdr.qdcount))
-	resp = append(resp, byte(hdr.ancount))
-	resp = append(resp, byte(hdr.nscount))
-	resp = append(resp, byte(hdr.arcount))
+	resp := []byte{
+		byte(hdr.id >> 8), byte(hdr.id), // split uint16 into two bytes
+		hdr.flags[0], hdr.flags[1],
+		byte(hdr.qdcount >> 8), byte(hdr.qdcount),
+		byte(hdr.ancount >> 8), byte(hdr.ancount),
+		byte(hdr.nscount >> 8), byte(hdr.nscount),
+		byte(hdr.arcount >> 8), byte(hdr.arcount),
+	}
+	// resp := []byte{}
+	// resp = append(resp, byte(hdr.id))
+	// resp = append(resp, hdr.flags[:]...)
+	// resp = append(resp, byte(hdr.qdcount))
+	// resp = append(resp, byte(hdr.ancount))
+	// resp = append(resp, byte(hdr.nscount))
+	// resp = append(resp, byte(hdr.arcount))
 	return resp
 }
 
