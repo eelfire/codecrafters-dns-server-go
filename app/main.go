@@ -48,6 +48,7 @@ func main() {
 		}
 
 		receivedData := string(buf[:size])
+		fmt.Printf("%x\n", buf[:size])
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
 
 		// Create an empty response
