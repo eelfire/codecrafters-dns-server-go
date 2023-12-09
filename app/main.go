@@ -12,15 +12,15 @@ func main() {
 	fmt.Println("Logs from your program will appear here!")
 
 	// fmt.Println(GenDnsHeaderResponse(NewDnsHeader()))
-	// dnsMessage := DnsMessage{
-	// 	hdr:  NewHeader(),
-	// 	ques: NewQuestion(),
-	// 	ans:  NewAnswer(),
-	// }
-	// msg := GenDnsRespone(dnsMessage)
-	// fmt.Println(msg)
-	// fmt.Println(string(msg))
-	// fmt.Printf("%x\n", msg)
+	dnsMessage := DnsMessage{
+		hdr:  NewHeader(),
+		ques: NewQuestion(),
+		ans:  NewAnswer(),
+	}
+	msg := GenDnsRespone(dnsMessage)
+	fmt.Println(msg)
+	fmt.Println(string(msg))
+	fmt.Printf("%x\n", msg)
 	// fmt.Println(byte(69))
 	// fmt.Printf("%x\n", byte(69))
 
@@ -158,10 +158,10 @@ func EncodeIp(ip string) []byte {
 func NewAnswer() Answer {
 	return Answer{
 		name:     "codecrafters.io",
-		typ:      [2]byte{byte(1)},
-		class:    [2]byte{byte(1)},
-		ttl:      [4]byte{byte(69)},
-		rdlength: [2]byte{byte(4)},
+		typ:      [2]byte{0, 1},
+		class:    [2]byte{0, 1},
+		ttl:      [4]byte{4, 5},
+		rdlength: [2]byte{0, 4},
 		rdata:    EncodeIp("8.8.8.8"),
 	}
 }
