@@ -51,12 +51,13 @@ func main() {
 		receivedData := string(buf[:size])
 		// fmt.Printf("%x\n", buf[:size])
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
+		dnsReceived := DecodeDnsResponse(buf[:])
 
 		// Create an empty response
 		dnsMessage := DnsMessage{
 			hdr:  NewHeader(),
-			ques: NewQuestion(),
-			ans:  NewAnswer(),
+			ques: []Question{NewQuestion()},
+			ans:  []Answer{NewAnswer()},
 		}
 
 		// need to improve this very much
@@ -72,12 +73,20 @@ func main() {
 		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 129), rcode}
 
 		// respName := DecodeName(buf[12:])
-		respName := ParseCompressed(buf[12:])
-		dnsMessage.ques.name = respName
-		dnsMessage.ans.name = respName
+		// respName := ParseCompressed(buf[:])
+		// dnsMessage.ques[0].name = respName
+		// dnsMessage.ans[0].name = respName
+		for i := uint16(0); i < dnsReceived.hdr.qdcount; {
+			dnsMessage.ques[i].name = dnsReceived.ques[i].name
+		}
 
-		dnsMessage.hdr.qdcount += 1
-		dnsMessage.hdr.ancount += 1
+		for i := uint16(0); i < dnsReceived.hdr.ancount; {
+			dnsMessage.ques[i].name = dnsReceived.ans[i].name
+		}
+
+		dnsMessage.hdr.qdcount = dnsReceived.hdr.qdcount
+		dnsMessage.hdr.ancount = dnsReceived.hdr.ancount
+
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 
@@ -154,24 +163,24 @@ func EncodeName(name string) []byte {
 	return resp
 }
 
-func DecodeName(buf []byte) string {
-	name := ""
-	i := 0
-	for i < len(buf) {
-		length := int(buf[i])
-		if length == 0 {
-			break
-		}
-		i++
-		name += string(buf[i:i+length]) + "."
-		i += length
-	}
-	return strings.TrimSuffix(name, ".")
-}
+// func DecodeName(buf []byte) string {
+// 	name := ""
+// 	i := 0
+// 	for i < len(buf) {
+// 		length := int(buf[i])
+// 		if length == 0 {
+// 			break
+// 		}
+// 		i++
+// 		name += string(buf[i:i+length]) + "."
+// 		i += length
+// 	}
+// 	return strings.TrimSuffix(name, ".")
+// }
 
 func ParseCompressed(buf []byte) string {
 	name := ""
-	i := 0
+	i := 12
 	for i < len(buf) {
 		length := int(buf[i])
 		if length == 0 {
@@ -179,7 +188,7 @@ func ParseCompressed(buf []byte) string {
 		}
 		if length >= 192 {
 			offset := int(binary.BigEndian.Uint16([]byte{buf[i], buf[i+1]}) ^ 0xC000)
-			offset += 12
+			// offset += 12
 			name += ParseCompressed(buf[offset:])
 			break
 		}
@@ -247,15 +256,108 @@ func GenDnsAnswerResponse(ans Answer) []byte {
 
 type DnsMessage struct {
 	hdr  DnsHeader
-	ques Question
-	ans  Answer
+	ques []Question
+	ans  []Answer
 }
 
 func GenDnsRespone(msg DnsMessage) []byte {
 	resp := []byte{}
 	resp = append(resp, GenDnsHeaderResponse(msg.hdr)...)
-	resp = append(resp, GenDnsQuestionResponse(msg.ques)...)
-	resp = append(resp, GenDnsAnswerResponse(msg.ans)...)
+	for _, q := range msg.ques {
+		resp = append(resp, GenDnsQuestionResponse(q)...)
+	}
+	for _, a := range msg.ans {
+		resp = append(resp, GenDnsAnswerResponse(a)...)
+	}
 
 	return resp
+}
+
+func DecodeDnsResponse(buf []byte) DnsMessage {
+	dnsMessage := DnsMessage{
+		hdr:  NewHeader(),
+		ques: []Question{NewQuestion()},
+		ans:  []Answer{NewAnswer()},
+	}
+
+	// Decode the header
+	headerSize := 12 // Size of the DNS header
+	headerBytes := buf[:headerSize]
+	dnsMessage.hdr = DecodeDnsHeader(headerBytes)
+
+	// Decode the questions
+	questionBytes := buf[headerSize:]
+	dnsMessage.ques = DecodeDnsQuestions(questionBytes)
+
+	// Decode the answers
+	answerBytes := buf[headerSize+len(questionBytes):]
+	dnsMessage.ans = DecodeDnsAnswers(answerBytes)
+
+	return dnsMessage
+}
+
+func DecodeDnsHeader(buf []byte) DnsHeader {
+	header := DnsHeader{}
+	header.id = binary.BigEndian.Uint16(buf[0:2])
+	copy(header.flags[:], buf[2:4])
+	header.qdcount = binary.BigEndian.Uint16(buf[4:6])
+	header.ancount = binary.BigEndian.Uint16(buf[6:8])
+	header.nscount = binary.BigEndian.Uint16(buf[8:10])
+	header.arcount = binary.BigEndian.Uint16(buf[10:12])
+	return header
+}
+
+func DecodeDnsQuestions(buf []byte) []Question {
+	questions := []Question{}
+	offset := 0
+	for offset < len(buf) {
+		question := Question{}
+		question.name, offset = DecodeName(buf, offset)
+		copy(question.typ[:], buf[offset:offset+2])
+		copy(question.class[:], buf[offset+2:offset+4])
+		questions = append(questions, question)
+		offset += 4
+	}
+	return questions
+}
+
+func DecodeDnsAnswers(buf []byte) []Answer {
+	answers := []Answer{}
+	offset := 0
+	for offset < len(buf) {
+		answer := Answer{}
+		answer.name, offset = DecodeName(buf, offset)
+		answer.typ = binary.BigEndian.Uint16(buf[offset : offset+2])
+		answer.class = binary.BigEndian.Uint16(buf[offset+2 : offset+4])
+		answer.ttl = binary.BigEndian.Uint32(buf[offset+4 : offset+8])
+		answer.rdlength = binary.BigEndian.Uint16(buf[offset+8 : offset+10])
+		answer.rdata = buf[offset+10 : offset+10+int(answer.rdlength)]
+		answers = append(answers, answer)
+		offset += 10 + int(answer.rdlength)
+	}
+	return answers
+}
+
+func DecodeName(buf []byte, offset int) (string, int) {
+	name := ""
+	for {
+		length := int(buf[offset])
+		if length == 0 {
+			break
+		}
+		if len(name) > 0 {
+			name += "."
+		}
+		if length >= 192 {
+			pointerOffset := binary.BigEndian.Uint16(buf[offset : offset+2])
+			pointerOffset &= 0x3FFF
+			namePart, _ := DecodeName(buf, int(pointerOffset))
+			name += namePart
+			offset += 2
+			break
+		}
+		name += string(buf[offset+1 : offset+1+length])
+		offset += 1 + length
+	}
+	return name, offset + 1
 }
