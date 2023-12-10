@@ -64,14 +64,21 @@ func main() {
 		dnsMessage.hdr.id = binary.BigEndian.Uint16(buf[0:2])
 		// mask := // 01111001 00000000
 		opcode := byte((buf[2] << 1) >> 4)
+		rd := byte(buf[2] & 1)
 		var rcode byte
 		if opcode == 0 {
 			rcode = 0
 		} else {
 			rcode = 4
 		}
-		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 129), rcode}
-		fmt.Printf("\t-->>%x\n", rcode)
+		x := byte(0)
+		if rd == 0 {
+			x = 129
+		} else {
+			x = 128
+		}
+		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | x), rcode}
+		fmt.Printf("\t-->>%x\n", dnsMessage.hdr.flags)
 
 		// respName := DecodeName(buf[12:])
 		// respName := ParseCompressed(buf[:])
