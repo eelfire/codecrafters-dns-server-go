@@ -392,8 +392,8 @@ func DecodeName(buf []byte, offset int) (string, int) {
 			name += "."
 		}
 		if length >= 192 {
-			pointerOffset := binary.BigEndian.Uint16(buf[offset : offset+2])
-			pointerOffset &= 0x3FFF
+			pointerOffset := binary.BigEndian.Uint16(buf[offset:offset+2]) ^ 0xC000
+			// pointerOffset &= 0x3FFF
 			namePart, _ := DecodeName(buf, int(pointerOffset))
 			name += namePart
 			offset += 2
