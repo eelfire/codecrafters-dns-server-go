@@ -71,7 +71,8 @@ func main() {
 		}
 		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 129), rcode}
 
-		respName := DecodeName(buf[12:])
+		// respName := DecodeName(buf[12:])
+		respName := ParseCompressed(buf[12:])
 		dnsMessage.ques.name = respName
 		dnsMessage.ans.name = respName
 
@@ -159,6 +160,27 @@ func DecodeName(buf []byte) string {
 	for i < len(buf) {
 		length := int(buf[i])
 		if length == 0 {
+			break
+		}
+		i++
+		name += string(buf[i:i+length]) + "."
+		i += length
+	}
+	return strings.TrimSuffix(name, ".")
+}
+
+func ParseCompressed(buf []byte) string {
+	name := ""
+	i := 0
+	for i < len(buf) {
+		length := int(buf[i])
+		if length == 0 {
+			break
+		}
+		if length >= 192 {
+			offset := int(binary.BigEndian.Uint16([]byte{buf[i], buf[i+1]}) ^ 0xC000)
+			offset += 12
+			name += ParseCompressed(buf[offset:])
 			break
 		}
 		i++
