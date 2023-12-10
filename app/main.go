@@ -308,7 +308,8 @@ func DecodeDnsResponse(buf []byte) DnsMessage {
 	fmt.Println(ancount)
 
 	// Decode the questions
-	questionBytes := buf[headerSize:]
+	// questionBytes := buf[headerSize:]
+	questionBytes := buf[:]
 	// offset := 0
 	dnsMessage.ques, _ = DecodeDnsQuestions(questionBytes, qdcount)
 	fmt.Println(dnsMessage.ques)
@@ -333,7 +334,8 @@ func DecodeDnsHeader(buf []byte) DnsHeader {
 
 func DecodeDnsQuestions(buf []byte, qdcount uint16) ([]Question, int) {
 	questions := []Question{}
-	offset := 0
+	// offset := 0
+	offset := 12
 	count := uint16(0)
 	for offset < len(buf) {
 		question := Question{}
