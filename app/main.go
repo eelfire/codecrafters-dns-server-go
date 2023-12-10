@@ -71,7 +71,7 @@ func main() {
 		}
 		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 129), rcode}
 
-		respName := DecodeName(buf[96:])
+		respName := DecodeName(buf[12:])
 		dnsMessage.ques.name = respName
 		dnsMessage.ans.name = respName
 
