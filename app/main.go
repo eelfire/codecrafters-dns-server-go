@@ -56,8 +56,8 @@ func main() {
 		// Create an empty response
 		dnsMessage := DnsMessage{
 			hdr:  NewHeader(),
-			ques: []Question{NewQuestion()},
-			ans:  []Answer{NewAnswer()},
+			ques: []Question{},
+			ans:  []Answer{},
 		}
 
 		// need to improve this very much
@@ -80,12 +80,16 @@ func main() {
 		fmt.Println(qdcount)
 		for i := uint16(0); i < dnsReceived.hdr.qdcount; i++ {
 			fmt.Println("-0-0-0-0-0-", i)
-			dnsMessage.ques[i].name = dnsReceived.ques[i].name
+			ques := NewQuestion()
+			ques.name = dnsReceived.ques[i].name
+			dnsMessage.ques = append(dnsMessage.ques, ques)
 		}
 
 		for i := uint16(0); i < dnsReceived.hdr.qdcount; i++ {
 			fmt.Println("c0c0c0c0c0c0", i)
-			dnsMessage.ans[i].name = dnsReceived.ques[i].name
+			ans := NewAnswer()
+			ans.name = dnsReceived.ques[i].name
+			dnsMessage.ans = append(dnsMessage.ans, ans)
 		}
 
 		dnsMessage.hdr.qdcount = dnsReceived.hdr.qdcount
@@ -298,6 +302,7 @@ func DecodeDnsResponse(buf []byte) DnsMessage {
 	questionBytes := buf[headerSize:]
 	// offset := 0
 	dnsMessage.ques, _ = DecodeDnsQuestions(questionBytes, qdcount)
+	fmt.Println(dnsMessage.ques)
 
 	// Decode the answers
 	// answerBytes := buf[headerSize+offset+1:]
