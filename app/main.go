@@ -72,13 +72,13 @@ func main() {
 			rcode = 4
 		}
 		x := byte(0)
-		if rd == 0 {
+		if rd == 1 {
 			x = 129
 		} else {
 			x = 128
 		}
 		fmt.Println(x)
-		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 128), rcode}
+		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | x), rcode}
 		fmt.Printf("\t-->>%x\n", dnsMessage.hdr.flags)
 
 		// respName := DecodeName(buf[12:])
