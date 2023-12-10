@@ -76,16 +76,20 @@ func main() {
 		// respName := ParseCompressed(buf[:])
 		// dnsMessage.ques[0].name = respName
 		// dnsMessage.ans[0].name = respName
-		for i := uint16(0); i < dnsReceived.hdr.qdcount; {
+		qdcount := dnsReceived.hdr.qdcount
+		fmt.Println(qdcount)
+		for i := uint16(0); i < dnsReceived.hdr.qdcount; i++ {
+			fmt.Println("-0-0-0-0-0-", i)
 			dnsMessage.ques[i].name = dnsReceived.ques[i].name
 		}
 
-		for i := uint16(0); i < dnsReceived.hdr.ancount; {
-			dnsMessage.ques[i].name = dnsReceived.ans[i].name
+		for i := uint16(0); i < dnsReceived.hdr.qdcount; i++ {
+			fmt.Println("c0c0c0c0c0c0", i)
+			dnsMessage.ans[i].name = dnsReceived.ques[i].name
 		}
 
 		dnsMessage.hdr.qdcount = dnsReceived.hdr.qdcount
-		dnsMessage.hdr.ancount = dnsReceived.hdr.ancount
+		dnsMessage.hdr.ancount = dnsReceived.hdr.qdcount
 
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
@@ -287,15 +291,17 @@ func DecodeDnsResponse(buf []byte) DnsMessage {
 
 	qdcount := dnsMessage.hdr.qdcount
 	ancount := dnsMessage.hdr.ancount
+	fmt.Println(qdcount)
+	fmt.Println(ancount)
 
 	// Decode the questions
 	questionBytes := buf[headerSize:]
-	offset := 0
-	dnsMessage.ques, offset = DecodeDnsQuestions(questionBytes, qdcount)
+	// offset := 0
+	dnsMessage.ques, _ = DecodeDnsQuestions(questionBytes, qdcount)
 
 	// Decode the answers
-	answerBytes := buf[headerSize+offset+1:]
-	dnsMessage.ans = DecodeDnsAnswers(answerBytes, ancount)
+	// answerBytes := buf[headerSize+offset+1:]
+	// dnsMessage.ans = DecodeDnsAnswers(answerBytes, ancount)
 
 	return dnsMessage
 }
@@ -311,9 +317,10 @@ func DecodeDnsHeader(buf []byte) DnsHeader {
 	return header
 }
 
-func DecodeDnsQuestions(buf []byte, count uint16) ([]Question, int) {
+func DecodeDnsQuestions(buf []byte, qdcount uint16) ([]Question, int) {
 	questions := []Question{}
 	offset := 0
+	count := uint16(0)
 	for offset < len(buf) {
 		question := Question{}
 		// fmt.Println(offset)
@@ -323,8 +330,9 @@ func DecodeDnsQuestions(buf []byte, count uint16) ([]Question, int) {
 		questions = append(questions, question)
 		offset += 4
 
-		count--
-		if count == 0 {
+		fmt.Println("here")
+		count++
+		if count == qdcount {
 			break
 		}
 
@@ -337,19 +345,23 @@ func DecodeDnsAnswers(buf []byte, count uint16) []Answer {
 	offset := 0
 	for offset < len(buf) {
 		answer := Answer{}
-		answer.name, offset = DecodeName(buf, offset)
-		answer.typ = binary.BigEndian.Uint16(buf[offset : offset+2])
-		answer.class = binary.BigEndian.Uint16(buf[offset+2 : offset+4])
-		answer.ttl = binary.BigEndian.Uint32(buf[offset+4 : offset+8])
-		answer.rdlength = binary.BigEndian.Uint16(buf[offset+8 : offset+10])
-		answer.rdata = buf[offset+10 : offset+10+int(answer.rdlength)]
+		// answer.name, offset = DecodeName(buf, offset)
+		// answer.typ = binary.BigEndian.Uint16(buf[offset : offset+2])
+		// answer.class = binary.BigEndian.Uint16(buf[offset+2 : offset+4])
+		// answer.ttl = binary.BigEndian.Uint32(buf[offset+4 : offset+8])
+		// answer.rdlength = binary.BigEndian.Uint16(buf[offset+8 : offset+10])
+		// answer.rdata = buf[offset+10 : offset+10+int(answer.rdlength)]
+		fmt.Println("there")
 		answers = append(answers, answer)
-		offset += 10 + int(answer.rdlength)
+		break
+		// offset += 10 + int(answer.rdlength)
 
-		count--
-		if count == 0 {
-			break
-		}
+		// if count != 0 {
+		// 	count--
+		// }
+		// if count == 0 {
+		// 	break
+		// }
 	}
 	return answers
 }
@@ -357,6 +369,7 @@ func DecodeDnsAnswers(buf []byte, count uint16) []Answer {
 func DecodeName(buf []byte, offset int) (string, int) {
 	name := ""
 	for {
+		fmt.Println("is it me?")
 		length := int(buf[offset])
 		if length == 0 {
 			break
