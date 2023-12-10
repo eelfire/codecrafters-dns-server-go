@@ -285,13 +285,17 @@ func DecodeDnsResponse(buf []byte) DnsMessage {
 	headerBytes := buf[:headerSize]
 	dnsMessage.hdr = DecodeDnsHeader(headerBytes)
 
+	qdcount := dnsMessage.hdr.qdcount
+	ancount := dnsMessage.hdr.ancount
+
 	// Decode the questions
 	questionBytes := buf[headerSize:]
-	dnsMessage.ques = DecodeDnsQuestions(questionBytes)
+	offset := 0
+	dnsMessage.ques, offset = DecodeDnsQuestions(questionBytes, qdcount)
 
 	// Decode the answers
-	answerBytes := buf[headerSize+len(questionBytes):]
-	dnsMessage.ans = DecodeDnsAnswers(answerBytes)
+	answerBytes := buf[headerSize+offset+1:]
+	dnsMessage.ans = DecodeDnsAnswers(answerBytes, ancount)
 
 	return dnsMessage
 }
@@ -307,21 +311,28 @@ func DecodeDnsHeader(buf []byte) DnsHeader {
 	return header
 }
 
-func DecodeDnsQuestions(buf []byte) []Question {
+func DecodeDnsQuestions(buf []byte, count uint16) ([]Question, int) {
 	questions := []Question{}
 	offset := 0
 	for offset < len(buf) {
 		question := Question{}
+		// fmt.Println(offset)
 		question.name, offset = DecodeName(buf, offset)
 		copy(question.typ[:], buf[offset:offset+2])
 		copy(question.class[:], buf[offset+2:offset+4])
 		questions = append(questions, question)
 		offset += 4
+
+		count--
+		if count == 0 {
+			break
+		}
+
 	}
-	return questions
+	return questions, offset
 }
 
-func DecodeDnsAnswers(buf []byte) []Answer {
+func DecodeDnsAnswers(buf []byte, count uint16) []Answer {
 	answers := []Answer{}
 	offset := 0
 	for offset < len(buf) {
@@ -334,6 +345,11 @@ func DecodeDnsAnswers(buf []byte) []Answer {
 		answer.rdata = buf[offset+10 : offset+10+int(answer.rdlength)]
 		answers = append(answers, answer)
 		offset += 10 + int(answer.rdlength)
+
+		count--
+		if count == 0 {
+			break
+		}
 	}
 	return answers
 }
@@ -356,8 +372,9 @@ func DecodeName(buf []byte, offset int) (string, int) {
 			offset += 2
 			break
 		}
-		name += string(buf[offset+1 : offset+1+length])
-		offset += 1 + length
+		offset += 1
+		name += string(buf[offset : offset+length])
+		offset += length
 	}
 	return name, offset + 1
 }
