@@ -24,6 +24,7 @@ func main() {
 	// fmt.Printf("%x\n", msg)
 	// fmt.Println(byte(69))
 	// fmt.Printf("%x\n", byte(69))
+	// fmt.Println(DecodeName(EncodeName("codecrafters.io")))
 
 	udpAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:2053")
 	if err != nil {
@@ -57,6 +58,8 @@ func main() {
 			ques: NewQuestion(),
 			ans:  NewAnswer(),
 		}
+
+		// need to improve this very much
 		dnsMessage.hdr.id = binary.BigEndian.Uint16(buf[0:2])
 		// mask := // 01111001 00000000
 		opcode := byte((buf[2] << 1) >> 4)
@@ -67,6 +70,11 @@ func main() {
 			rcode = 4
 		}
 		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 129), rcode}
+
+		respName := DecodeName(buf[96:])
+		dnsMessage.ques.name = respName
+		dnsMessage.ans.name = respName
+
 		dnsMessage.hdr.qdcount += 1
 		dnsMessage.hdr.ancount += 1
 		response := GenDnsRespone(dnsMessage)
@@ -143,6 +151,21 @@ func EncodeName(name string) []byte {
 	}
 	resp = append(resp, byte(00))
 	return resp
+}
+
+func DecodeName(buf []byte) string {
+	name := ""
+	i := 0
+	for i < len(buf) {
+		length := int(buf[i])
+		if length == 0 {
+			break
+		}
+		i++
+		name += string(buf[i:i+length]) + "."
+		i += length
+	}
+	return strings.TrimSuffix(name, ".")
 }
 
 func GenDnsQuestionResponse(ques Question) []byte {
