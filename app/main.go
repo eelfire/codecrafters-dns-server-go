@@ -71,6 +71,7 @@ func main() {
 			rcode = 4
 		}
 		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 129), rcode}
+		fmt.Printf("\t-->>%x\n", rcode)
 
 		// respName := DecodeName(buf[12:])
 		// respName := ParseCompressed(buf[:])
@@ -78,22 +79,22 @@ func main() {
 		// dnsMessage.ans[0].name = respName
 		qdcount := dnsReceived.hdr.qdcount
 		fmt.Println(qdcount)
-		for i := uint16(0); i < dnsReceived.hdr.qdcount; i++ {
+		for i := uint16(0); i < qdcount; i++ {
 			fmt.Println("-0-0-0-0-0-", i)
 			ques := NewQuestion()
 			ques.name = dnsReceived.ques[i].name
 			dnsMessage.ques = append(dnsMessage.ques, ques)
 		}
 
-		for i := uint16(0); i < dnsReceived.hdr.qdcount; i++ {
+		for i := uint16(0); i < qdcount; i++ {
 			fmt.Println("c0c0c0c0c0c0", i)
 			ans := NewAnswer()
 			ans.name = dnsReceived.ques[i].name
 			dnsMessage.ans = append(dnsMessage.ans, ans)
 		}
 
-		dnsMessage.hdr.qdcount = dnsReceived.hdr.qdcount
-		dnsMessage.hdr.ancount = dnsReceived.hdr.qdcount
+		dnsMessage.hdr.qdcount = qdcount
+		dnsMessage.hdr.ancount = qdcount
 
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
