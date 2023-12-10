@@ -77,7 +77,7 @@ func main() {
 		} else {
 			x = 128
 		}
-		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | x), rcode}
+		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | 128), rcode}
 		fmt.Printf("\t-->>%x\n", dnsMessage.hdr.flags)
 
 		// respName := DecodeName(buf[12:])
