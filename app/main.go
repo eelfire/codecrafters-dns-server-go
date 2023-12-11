@@ -122,19 +122,32 @@ func main() {
 			ques := NewQuestion()
 			ques.name = dnsReceived.ques[i].name
 			dnsMessage.ques = append(dnsMessage.ques, ques)
+
+			if resolverAddr != "" {
+				rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
+				dnsMessage.ans = append(dnsMessage.ans, rDnsReceived.ans...)
+			}
+			// } else {
+			// 	for i := uint16(0); i < qdcount; i++ {
+			// 		fmt.Println("c0c0c0c0c0c0", i)
+			// 		ans := NewAnswer()
+			// 		ans.name = dnsReceived.ques[i].name
+			// 		dnsMessage.ans = append(dnsMessage.ans, ans)
+			// 	}
+			// }
 		}
 
-		for i := uint16(0); i < qdcount; i++ {
-			fmt.Println("c0c0c0c0c0c0", i)
-			ans := NewAnswer()
-			ans.name = dnsReceived.ques[i].name
-			dnsMessage.ans = append(dnsMessage.ans, ans)
-		}
+		// for i := uint16(0); i < qdcount; i++ {
+		// 	fmt.Println("c0c0c0c0c0c0", i)
+		// 	ans := NewAnswer()
+		// 	ans.name = dnsReceived.ques[i].name
+		// 	dnsMessage.ans = append(dnsMessage.ans, ans)
+		// }
 
-		if resolverAddr != "" {
-			rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
-			dnsMessage.ans = rDnsReceived.ans
-		}
+		// if resolverAddr != "" {
+		// 	rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
+		// 	dnsMessage.ans = rDnsReceived.ans
+		// }
 		// fmt.Println("\n\n----0o0o0o0o--\n", dnsMessage, "\n\n---0o0o0o0o---")
 
 		fmt.Println("final qdcount", dnsMessage.hdr.qdcount, "-- final ancount", dnsMessage.hdr.ancount, "| addr: ", source)
