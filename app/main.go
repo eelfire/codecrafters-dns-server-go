@@ -129,15 +129,15 @@ func main() {
 		dnsMessage.hdr.ancount = qdcount
 
 		if forwardAddr != nil {
-			_, err = dialConn.WriteToUDP(buf, forwardAddr)
-			if err != nil {
-				fmt.Println("Failed to send response:", err)
-			}
-
 			size, source, err := dialConn.ReadFromUDP(buf)
 			if err != nil {
 				fmt.Println("Error receiving data:", err)
 				break
+			}
+
+			_, err = dialConn.WriteToUDP(buf, source)
+			if err != nil {
+				fmt.Println("Failed to send response:", err)
 			}
 
 			receivedData := string(buf2[:size])
