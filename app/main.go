@@ -393,7 +393,7 @@ func DecodeDnsResponseWithAnswer(buf []byte) DnsMessage {
 	dnsMessage.hdr = DecodeDnsHeader(headerBytes)
 
 	qdcount := dnsMessage.hdr.qdcount
-	ancount := dnsMessage.hdr.qdcount
+	ancount := dnsMessage.hdr.ancount
 	fmt.Println("qdcount (w/ ans): ", qdcount)
 	fmt.Println("qdcount (w/ ans): ", ancount)
 
