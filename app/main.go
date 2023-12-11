@@ -131,8 +131,11 @@ func main() {
 		dnsMessage.hdr.qdcount = qdcount
 		dnsMessage.hdr.ancount = qdcount
 
-		rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
-		dnsMessage.ans = rDnsReceived.ans
+		if resolverAddr != "" {
+			rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
+			dnsMessage.ans = rDnsReceived.ans
+		}
+		fmt.Println("\n\n----0o0o0o0o--\n", dnsMessage, "\n\n---0o0o0o0o---")
 
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
@@ -164,7 +167,9 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 		return dnsMessage, err
 	}
 
-	dnsMessage = DecodeDnsResponse(response)
+	dnsMessage = DecodeDnsResponseWithAnswer(response)
+	fmt.Println("\n\n------", dnsMessage, "\n\n------")
+	fmt.Println("*(***((y)))", dnsMessage.ans)
 
 	return dnsMessage, nil
 }
@@ -374,6 +379,37 @@ func DecodeDnsResponse(buf []byte) DnsMessage {
 	return dnsMessage
 }
 
+func DecodeDnsResponseWithAnswer(buf []byte) DnsMessage {
+	dnsMessage := DnsMessage{
+		hdr:  NewHeader(),
+		ques: []Question{NewQuestion()},
+		ans:  []Answer{NewAnswer()},
+	}
+
+	// Decode the header
+	headerSize := 12 // Size of the DNS header
+	headerBytes := buf[:headerSize]
+	dnsMessage.hdr = DecodeDnsHeader(headerBytes)
+
+	qdcount := dnsMessage.hdr.qdcount
+	ancount := dnsMessage.hdr.ancount
+	fmt.Println(qdcount)
+	fmt.Println(ancount)
+
+	// Decode the questions
+	// questionBytes := buf[headerSize:]
+	questionBytes := buf[:]
+	offset := 0
+	dnsMessage.ques, offset = DecodeDnsQuestions(questionBytes, qdcount)
+	fmt.Println(dnsMessage.ques)
+
+	// Decode the answers
+	answerBytes := buf[headerSize+offset+1:]
+	dnsMessage.ans = DecodeDnsAnswers(answerBytes, ancount)
+
+	return dnsMessage
+}
+
 func DecodeDnsHeader(buf []byte) DnsHeader {
 	header := DnsHeader{}
 	header.id = binary.BigEndian.Uint16(buf[0:2])
@@ -414,23 +450,23 @@ func DecodeDnsAnswers(buf []byte, count uint16) []Answer {
 	offset := 0
 	for offset < len(buf) {
 		answer := Answer{}
-		// answer.name, offset = DecodeName(buf, offset)
-		// answer.typ = binary.BigEndian.Uint16(buf[offset : offset+2])
-		// answer.class = binary.BigEndian.Uint16(buf[offset+2 : offset+4])
-		// answer.ttl = binary.BigEndian.Uint32(buf[offset+4 : offset+8])
-		// answer.rdlength = binary.BigEndian.Uint16(buf[offset+8 : offset+10])
-		// answer.rdata = buf[offset+10 : offset+10+int(answer.rdlength)]
+		answer.name, offset = DecodeName(buf, offset)
+		answer.typ = binary.BigEndian.Uint16(buf[offset : offset+2])
+		answer.class = binary.BigEndian.Uint16(buf[offset+2 : offset+4])
+		answer.ttl = binary.BigEndian.Uint32(buf[offset+4 : offset+8])
+		answer.rdlength = binary.BigEndian.Uint16(buf[offset+8 : offset+10])
+		answer.rdata = buf[offset+10 : offset+10+int(answer.rdlength)]
 		fmt.Println("there")
-		answers = append(answers, answer)
-		break
-		// offset += 10 + int(answer.rdlength)
+		// answers = append(answers, answer)
+		// break
+		offset += 10 + int(answer.rdlength)
 
-		// if count != 0 {
-		// 	count--
-		// }
-		// if count == 0 {
-		// 	break
-		// }
+		if count != 0 {
+			count--
+		}
+		if count == 0 {
+			break
+		}
 	}
 	return answers
 }
