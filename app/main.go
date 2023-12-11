@@ -145,8 +145,7 @@ func main() {
 
 		if resolverAddr != "" {
 			fmt.Println("buffer: ", buf)
-			// rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
-			rDnsReceived, _ := ForwardRequest(GenDnsRespone(dnsMessage), resolverAddr)
+			rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
 			dnsMessage.ans = rDnsReceived.ans
 		}
 		// fmt.Println("\n\n----0o0o0o0o--\n", dnsMessage, "\n\n---0o0o0o0o---")
@@ -182,6 +181,7 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 		return dnsMessage, err
 	}
 
+	fmt.Println("resolver response: ", response)
 	dnsMessage = DecodeDnsResponseWithAnswer(response)
 	// fmt.Println("\n\n------", dnsMessage, "\n\n------")
 	// fmt.Println("*(***((y)))", dnsMessage.ans)
