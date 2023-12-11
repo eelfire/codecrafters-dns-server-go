@@ -169,7 +169,7 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	}
 
 	dnsMessage = DecodeDnsResponseWithAnswer(response)
-	// fmt.Println("\n\n------", dnsMessage, "\n\n------")
+	fmt.Println("\n\n------", dnsMessage, "\n\n------")
 	// fmt.Println("*(***((y)))", dnsMessage.ans)
 
 	return dnsMessage, nil
