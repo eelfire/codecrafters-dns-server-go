@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -171,22 +172,22 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	}
 	defer conn.Close()
 
-	n, err := conn.Write(request)
+	_, err = conn.Write(request)
 	if err != nil {
 		return dnsMessage, err
 	}
 
+	time.Sleep(time.Millisecond * 5000)
 	response := make([]byte, 512)
-	m := 0
-	for m < n {
-		m, err = conn.Read(response)
-		if err != nil {
-			return dnsMessage, err
-		}
+	_, err = conn.Read(response)
+	if err != nil {
+		return dnsMessage, err
 	}
 
 	fmt.Println("resolver response: ", response)
 	dnsMessage = DecodeDnsResponseWithAnswer(response)
+	// fmt.Println("\n\n------", dnsMessage, "\n\n------")
+	// fmt.Println("*(***((y)))", dnsMessage.ans)
 
 	return dnsMessage, nil
 }
