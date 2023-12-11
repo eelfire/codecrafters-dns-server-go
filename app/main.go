@@ -166,7 +166,12 @@ func main() {
 
 func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	dnsMessage := DnsMessage{}
-	conn, err := net.Dial("udp", resolverAddr)
+	forwardAddr, err := net.ResolveUDPAddr("udp", resolverAddr)
+	if err != nil {
+		fmt.Println("Failed to resolve UDP address of resolver", err)
+		return dnsMessage, err
+	}
+	conn, err := net.DialUDP("udp", nil, forwardAddr)
 	if err != nil {
 		return dnsMessage, err
 	}
