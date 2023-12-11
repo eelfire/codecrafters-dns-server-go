@@ -342,7 +342,7 @@ func GenDnsRespone(msg DnsMessage) []byte {
 		resp = append(resp, GenDnsQuestionResponse(q)...)
 	}
 	for _, a := range msg.ans {
-		fmt.Println("over here")
+		// fmt.Println("over here")
 		resp = append(resp, GenDnsAnswerResponse(a)...)
 	}
 
@@ -363,15 +363,15 @@ func DecodeDnsResponse(buf []byte) DnsMessage {
 
 	qdcount := dnsMessage.hdr.qdcount
 	ancount := dnsMessage.hdr.ancount
-	fmt.Println(qdcount)
-	fmt.Println(ancount)
+	fmt.Println("qdcount (w/o ans): ", qdcount)
+	fmt.Println("ancount (w/o ans): ", ancount)
 
 	// Decode the questions
 	// questionBytes := buf[headerSize:]
 	questionBytes := buf[:]
 	// offset := 0
 	dnsMessage.ques, _ = DecodeDnsQuestions(questionBytes, qdcount)
-	fmt.Println(dnsMessage.ques)
+	// fmt.Println(dnsMessage.ques)
 
 	// Decode the answers
 	// answerBytes := buf[headerSize+offset+1:]
@@ -394,15 +394,15 @@ func DecodeDnsResponseWithAnswer(buf []byte) DnsMessage {
 
 	qdcount := dnsMessage.hdr.qdcount
 	ancount := dnsMessage.hdr.qdcount
-	fmt.Println(qdcount)
-	fmt.Println(ancount)
+	fmt.Println("qdcount (w/ ans): ", qdcount)
+	fmt.Println("qdcount (w/ ans): ", ancount)
 
 	// Decode the questions
 	// questionBytes := buf[headerSize:]
 	questionBytes := buf[:]
 	offset := 0
 	dnsMessage.ques, offset = DecodeDnsQuestions(questionBytes, qdcount)
-	fmt.Println(dnsMessage.ques)
+	// fmt.Println(dnsMessage.ques)
 
 	// Decode the answers
 	answerBytes := buf[offset:]
@@ -436,7 +436,7 @@ func DecodeDnsQuestions(buf []byte, qdcount uint16) ([]Question, int) {
 		questions = append(questions, question)
 		offset += 4
 
-		fmt.Println("here")
+		// fmt.Println("here")
 		count++
 		if count == qdcount {
 			break
@@ -457,7 +457,7 @@ func DecodeDnsAnswers(buf []byte, count uint16) []Answer {
 		answer.ttl = binary.BigEndian.Uint32(buf[offset+4 : offset+8])
 		answer.rdlength = binary.BigEndian.Uint16(buf[offset+8 : offset+10])
 		answer.rdata = buf[offset+10 : offset+10+int(answer.rdlength)]
-		fmt.Println("there")
+		// fmt.Println("there")
 		answers = append(answers, answer)
 		// break
 		offset += 10 + int(answer.rdlength)
@@ -475,7 +475,7 @@ func DecodeDnsAnswers(buf []byte, count uint16) []Answer {
 func DecodeName(buf []byte, offset int) (string, int) {
 	name := ""
 	for {
-		fmt.Println("is it me?")
+		// fmt.Println("is it me?")
 		length := int(buf[offset])
 		if length == 0 {
 			break
