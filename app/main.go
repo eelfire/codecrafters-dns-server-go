@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"flag"
 	"fmt"
 	"net"
 	"strconv"
@@ -11,6 +12,12 @@ import (
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
+
+	var resolverAddr string
+	flag.StringVar(&resolverAddr, "resolver", "", "specify resolver")
+	flag.Parse()
+
+	fmt.Println(resolverAddr)
 
 	// fmt.Println(GenDnsHeaderResponse(NewDnsHeader()))
 	// dnsMessage := DnsMessage{
@@ -39,7 +46,24 @@ func main() {
 	}
 	defer udpConn.Close()
 
+	var forwardAddr *net.UDPAddr
+	var dialConn *net.UDPConn
+	if resolverAddr != "" {
+		forwardAddr, err = net.ResolveUDPAddr("udp", resolverAddr)
+		if err != nil {
+			fmt.Println("Failed to resolve UDP address of resolver", err)
+			return
+		}
+		dialConn, err = net.DialUDP("udp", nil, forwardAddr)
+		if err != nil {
+			fmt.Println("Failed to bind to UDP address of resolver", err)
+			return
+		}
+		defer dialConn.Close()
+	}
+
 	buf := make([]byte, 512)
+	buf2 := make([]byte, 512)
 
 	for {
 		size, source, err := udpConn.ReadFromUDP(buf)
@@ -104,9 +128,28 @@ func main() {
 		dnsMessage.hdr.qdcount = qdcount
 		dnsMessage.hdr.ancount = qdcount
 
+		if forwardAddr != nil {
+			_, err = dialConn.WriteToUDP(buf, source)
+			if err != nil {
+				fmt.Println("Failed to send response:", err)
+			}
+
+			size, source, err := dialConn.ReadFromUDP(buf)
+			if err != nil {
+				fmt.Println("Error receiving data:", err)
+				break
+			}
+
+			receivedData := string(buf2[:size])
+			// fmt.Printf("%x\n", buf[:size])
+			fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
+			rDnsReceived := DecodeDnsResponse(buf2[:])
+
+			dnsMessage.ans = rDnsReceived.ans
+		}
+
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
-
 		// fmt.Printf("%x\n", response)
 
 		_, err = udpConn.WriteToUDP(response, source)
