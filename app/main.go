@@ -113,6 +113,9 @@ func main() {
 		// dnsMessage.ques[0].name = respName
 		// dnsMessage.ans[0].name = respName
 		qdcount := dnsReceived.hdr.qdcount
+		dnsMessage.hdr.qdcount = qdcount
+		dnsMessage.hdr.ancount = qdcount
+
 		fmt.Println(qdcount)
 		for i := uint16(0); i < qdcount; i++ {
 			fmt.Println("-0-0-0-0-0-", i)
@@ -127,9 +130,6 @@ func main() {
 			ans.name = dnsReceived.ques[i].name
 			dnsMessage.ans = append(dnsMessage.ans, ans)
 		}
-
-		dnsMessage.hdr.qdcount = qdcount
-		dnsMessage.hdr.ancount = qdcount
 
 		if resolverAddr != "" {
 			rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
@@ -364,7 +364,7 @@ func DecodeDnsResponse(buf []byte) DnsMessage {
 	dnsMessage.hdr = DecodeDnsHeader(headerBytes)
 
 	qdcount := dnsMessage.hdr.qdcount
-	ancount := dnsMessage.hdr.qdcount
+	ancount := dnsMessage.hdr.ancount
 	fmt.Println("qdcount (w/o ans): ", qdcount)
 	fmt.Println("ancount (w/o ans): ", ancount)
 
@@ -414,6 +414,7 @@ func DecodeDnsResponseWithAnswer(buf []byte) DnsMessage {
 }
 
 func DecodeDnsHeader(buf []byte) DnsHeader {
+	fmt.Println("in DecodeDnsHeader buf: ", buf)
 	header := DnsHeader{}
 	header.id = binary.BigEndian.Uint16(buf[0:2])
 	copy(header.flags[:], buf[2:4])
