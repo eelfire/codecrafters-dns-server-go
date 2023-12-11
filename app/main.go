@@ -52,11 +52,11 @@ func main() {
 	// var forwardAddr *net.UDPAddr
 	// var dialConn *net.UDPConn
 	// if resolverAddr != "" {
-	forwardAddr, err := net.ResolveUDPAddr("udp", resolverAddr)
-	if err != nil {
-		fmt.Println("Failed to resolve UDP address of resolver", err)
-		return
-	}
+	// forwardAddr, err := net.ResolveUDPAddr("udp", resolverAddr)
+	// if err != nil {
+	// 	fmt.Println("Failed to resolve UDP address of resolver", err)
+	// 	return
+	// }
 	// dialConn, err = net.DialUDP("udp", nil, forwardAddr)
 	// if err != nil {
 	// 	fmt.Println("Failed to bind to UDP address of resolver", err)
@@ -131,7 +131,7 @@ func main() {
 		dnsMessage.hdr.qdcount = qdcount
 		dnsMessage.hdr.ancount = qdcount
 
-		rDnsReceived, _ := ForwardRequest(buf[:], forwardAddr)
+		rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
 		dnsMessage.ans = rDnsReceived.ans
 
 		response := GenDnsRespone(dnsMessage)
@@ -145,52 +145,28 @@ func main() {
 	}
 }
 
-func ForwardRequest(reqBuf []byte, forwardAddr *net.UDPAddr) (DnsMessage, error) {
-	dialConn, err := net.DialUDP("udp", nil, forwardAddr)
+func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
+	dnsMessage := DnsMessage{}
+	conn, err := net.Dial("udp", resolverAddr)
 	if err != nil {
-		fmt.Println("Failed to bind to UDP address of resolver", err)
-		return DnsMessage{}, fmt.Errorf("can't dial resolver: %w", err)
+		return dnsMessage, err
 	}
-	defer dialConn.Close()
+	defer conn.Close()
 
-	buf := make([]byte, 512)
-	response := DnsMessage{}
-
-	for {
-		size, source, err := dialConn.ReadFromUDP(buf)
-		if err != nil {
-			fmt.Println("Error receiving data:", err)
-			break
-		}
-
-		receivedData := string(buf[:size])
-		// fmt.Printf("%x\n", buf[:size])
-		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
-		response = DecodeDnsResponse(buf[:])
-
-		// Create an empty response
-		// dnsMessage := DnsMessage{
-		// 	hdr:  NewHeader(),
-		// 	ques: []Question{},
-		// 	ans:  []Answer{},
-		// }
-
-		// if forwardAddr != nil {
-		fmt.Println("ka-kaw ka-kaw")
-
-		// }
-
-		// response := GenDnsRespone(dnsMessage)
-		// response := []byte{}
-		// fmt.Printf("%x\n", response)
-
-		_, err = dialConn.WriteToUDP(reqBuf, source)
-		if err != nil {
-			fmt.Println("Failed to send response:", err)
-		}
+	_, err = conn.Write(request)
+	if err != nil {
+		return dnsMessage, err
 	}
 
-	return response, nil
+	response := make([]byte, 512)
+	_, err = conn.Read(response)
+	if err != nil {
+		return dnsMessage, err
+	}
+
+	dnsMessage = DecodeDnsResponse(response)
+
+	return dnsMessage, nil
 }
 
 type DnsHeader struct {
