@@ -421,6 +421,7 @@ func DecodeDnsHeader(buf []byte) DnsHeader {
 	header.ancount = binary.BigEndian.Uint16(buf[6:8])
 	header.nscount = binary.BigEndian.Uint16(buf[8:10])
 	header.arcount = binary.BigEndian.Uint16(buf[10:12])
+	fmt.Println("in DecodeDnsHeader: ", header)
 	return header
 }
 
