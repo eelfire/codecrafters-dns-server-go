@@ -196,6 +196,7 @@ func NewHeader() DnsHeader {
 }
 
 func GenDnsHeaderResponse(hdr DnsHeader) []byte {
+	fmt.Println("in GenDnsHeaderResponse (qdcount, ancount): (", hdr.qdcount, hdr.ancount, ")")
 	resp := []byte{
 		byte(hdr.id >> 8), byte(hdr.id), // split uint16 into two bytes
 		hdr.flags[0], hdr.flags[1],
