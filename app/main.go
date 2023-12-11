@@ -175,7 +175,7 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 		return dnsMessage, err
 	}
 
-	response := make([]byte, 512)
+	response := make([]byte, 1024)
 	_, err = conn.Read(response)
 	if err != nil {
 		return dnsMessage, err
