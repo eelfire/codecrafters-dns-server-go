@@ -154,6 +154,7 @@ func main() {
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 		// fmt.Printf("%x\n", response)
+		fmt.Println("dns response: ", response)
 
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
@@ -175,7 +176,7 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 		return dnsMessage, err
 	}
 
-	response := make([]byte, 1024)
+	response := make([]byte, 512)
 	_, err = conn.Read(response)
 	if err != nil {
 		return dnsMessage, err
