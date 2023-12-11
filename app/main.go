@@ -7,7 +7,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -155,7 +154,7 @@ func main() {
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 		// fmt.Printf("%x\n", response)
-		fmt.Println("dns response: ", response)
+		fmt.Println("dns response: ", response, len(response))
 
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
@@ -172,22 +171,22 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	}
 	defer conn.Close()
 
-	_, err = conn.Write(request)
+	n, err := conn.Write(request)
 	if err != nil {
 		return dnsMessage, err
 	}
 
-	time.Sleep(time.Millisecond * 500)
 	response := make([]byte, 512)
-	_, err = conn.Read(response)
-	if err != nil {
-		return dnsMessage, err
+	m := 0
+	for m < n {
+		m, err = conn.Read(response)
+		if err != nil {
+			return dnsMessage, err
+		}
 	}
 
 	fmt.Println("resolver response: ", response)
 	dnsMessage = DecodeDnsResponseWithAnswer(response)
-	// fmt.Println("\n\n------", dnsMessage, "\n\n------")
-	// fmt.Println("*(***((y)))", dnsMessage.ans)
 
 	return dnsMessage, nil
 }
