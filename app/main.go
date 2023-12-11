@@ -135,8 +135,9 @@ func main() {
 			rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
 			dnsMessage.ans = rDnsReceived.ans
 		}
-		fmt.Println("\n\n----0o0o0o0o--\n", dnsMessage, "\n\n---0o0o0o0o---")
+		// fmt.Println("\n\n----0o0o0o0o--\n", dnsMessage, "\n\n---0o0o0o0o---")
 
+		fmt.Println("final qdcount", dnsMessage.hdr.qdcount, "-- final ancount", dnsMessage.hdr.ancount, "| addr: ", source)
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 		// fmt.Printf("%x\n", response)
@@ -168,8 +169,8 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	}
 
 	dnsMessage = DecodeDnsResponseWithAnswer(response)
-	fmt.Println("\n\n------", dnsMessage, "\n\n------")
-	fmt.Println("*(***((y)))", dnsMessage.ans)
+	// fmt.Println("\n\n------", dnsMessage, "\n\n------")
+	// fmt.Println("*(***((y)))", dnsMessage.ans)
 
 	return dnsMessage, nil
 }
