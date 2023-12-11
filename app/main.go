@@ -342,6 +342,7 @@ func GenDnsRespone(msg DnsMessage) []byte {
 		resp = append(resp, GenDnsQuestionResponse(q)...)
 	}
 	for _, a := range msg.ans {
+		fmt.Println("over here")
 		resp = append(resp, GenDnsAnswerResponse(a)...)
 	}
 
@@ -404,7 +405,7 @@ func DecodeDnsResponseWithAnswer(buf []byte) DnsMessage {
 	fmt.Println(dnsMessage.ques)
 
 	// Decode the answers
-	answerBytes := buf[headerSize+offset+1:]
+	answerBytes := buf[offset:]
 	dnsMessage.ans = DecodeDnsAnswers(answerBytes, ancount)
 
 	return dnsMessage
@@ -457,7 +458,7 @@ func DecodeDnsAnswers(buf []byte, count uint16) []Answer {
 		answer.rdlength = binary.BigEndian.Uint16(buf[offset+8 : offset+10])
 		answer.rdata = buf[offset+10 : offset+10+int(answer.rdlength)]
 		fmt.Println("there")
-		// answers = append(answers, answer)
+		answers = append(answers, answer)
 		// break
 		offset += 10 + int(answer.rdlength)
 
