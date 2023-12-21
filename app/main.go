@@ -87,6 +87,12 @@ func main() {
 			ans:  []Answer{},
 		}
 
+		if resolverAddr != "" {
+			fmt.Println("buffer: ", buf)
+			rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
+			dnsMessage.ans = rDnsReceived.ans
+		}
+
 		// need to improve this very much
 		dnsMessage.hdr.id = binary.BigEndian.Uint16(buf[0:2])
 		// mask := // 01111001 00000000
@@ -136,18 +142,13 @@ func main() {
 			// }
 		}
 
-		for i := uint16(0); i < qdcount; i++ {
+		for i := uint16(0); resolverAddr == "" && i < qdcount; i++ {
 			fmt.Println("c0c0c0c0c0c0", i)
 			ans := NewAnswer()
 			ans.name = dnsReceived.ques[i].name
 			dnsMessage.ans = append(dnsMessage.ans, ans)
 		}
 
-		if resolverAddr != "" {
-			fmt.Println("buffer: ", buf)
-			rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
-			dnsMessage.ans = rDnsReceived.ans
-		}
 		// fmt.Println("\n\n----0o0o0o0o--\n", dnsMessage, "\n\n---0o0o0o0o---")
 
 		fmt.Println("final qdcount", dnsMessage.hdr.qdcount, "-- final ancount", dnsMessage.hdr.ancount, "| addr: ", source)
@@ -165,6 +166,8 @@ func main() {
 
 func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	dnsMessage := DnsMessage{}
+	response := make([]byte, 512)
+
 	forwardAddr, err := net.ResolveUDPAddr("udp", resolverAddr)
 	if err != nil {
 		fmt.Println("Failed to resolve UDP address of resolver", err)
@@ -176,14 +179,29 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	}
 	defer conn.Close()
 
+	// for {
+	// 	_, err = conn.WriteToUDP(request, forwardAddr)
+	// 	if err != nil {
+	// 		return dnsMessage, err
+	// 	}
+	//
+	// 	size, source, err := conn.ReadFromUDP(response)
+	// 	fmt.Println(size, source)
+	// 	if err != nil {
+	// 		fmt.Println("Error receiving data:", err)
+	// 		return dnsMessage, err
+	// 	} else {
+	// 		break
+	// 	}
+	//
+	// }
+
 	_, err = conn.Write(request)
-	// _, err = conn.WriteToUDP(request, forwardAddr)
 	if err != nil {
 		return dnsMessage, err
 	}
 
 	// time.Sleep(time.Millisecond * 1000)
-	response := make([]byte, 512)
 	_, err = conn.Read(response)
 	// _, _, err = conn.ReadFromUDP(response)
 	if err != nil {
