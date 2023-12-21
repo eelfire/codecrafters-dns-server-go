@@ -168,8 +168,9 @@ func main() {
 					}
 					tmpMsg.hdr = dnsMessage.hdr
 					tmpMsg.hdr.qdcount = 1
+					tmpMsg.hdr.ancount = 0
 					tmpMsg.ques = append(tmpMsg.ques, dnsMessage.ques[i])
-					tmpBuf := GenDnsRespone(tmpMsg)
+					tmpBuf := GenDnsResponeWithoutAns(tmpMsg)
 
 					rDnsReceived, _ := ForwardRequest(tmpBuf[:], resolverConn)
 					dnsMessage.ans = append(dnsMessage.ans, rDnsReceived.ans...)
@@ -418,6 +419,16 @@ func GenDnsRespone(msg DnsMessage) []byte {
 	for _, a := range msg.ans {
 		// fmt.Println("over here")
 		resp = append(resp, GenDnsAnswerResponse(a)...)
+	}
+
+	return resp
+}
+
+func GenDnsResponeWithoutAns(msg DnsMessage) []byte {
+	resp := []byte{}
+	resp = append(resp, GenDnsHeaderResponse(msg.hdr)...)
+	for _, q := range msg.ques {
+		resp = append(resp, GenDnsQuestionResponse(q)...)
 	}
 
 	return resp
