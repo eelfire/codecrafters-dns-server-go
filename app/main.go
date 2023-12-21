@@ -176,16 +176,16 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	}
 	defer conn.Close()
 
-	// _, err = conn.Write(request)
-	_, err = conn.WriteToUDP(request, forwardAddr)
+	_, err = conn.Write(request)
+	// _, err = conn.WriteToUDP(request, forwardAddr)
 	if err != nil {
 		return dnsMessage, err
 	}
 
 	// time.Sleep(time.Millisecond * 1000)
 	response := make([]byte, 512)
-	// _, err = conn.Read(response)
-	_, _, err = conn.ReadFromUDP(response)
+	_, err = conn.Read(response)
+	// _, _, err = conn.ReadFromUDP(response)
 	if err != nil {
 		return dnsMessage, err
 	}
