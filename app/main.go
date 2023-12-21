@@ -202,13 +202,13 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	}
 
 	// time.Sleep(time.Millisecond * 1000)
-	_, err = conn.Read(response)
+	n, err := conn.Read(response)
 	// _, _, err = conn.ReadFromUDP(response)
 	if err != nil {
 		return dnsMessage, err
 	}
 
-	fmt.Println("resolver response: ", response)
+	fmt.Println(n,"resolver response: ", response)
 	dnsMessage = DecodeDnsResponseWithAnswer(response)
 	// fmt.Println("\n\n------", dnsMessage, "\n\n------")
 	// fmt.Println("*(***((y)))", dnsMessage.ans)
