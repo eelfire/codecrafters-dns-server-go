@@ -20,7 +20,7 @@ func main() {
 	flag.StringVar(&port, "port", "2053", "specify port")
 	flag.Parse()
 
-	fmt.Println(resolverAddr)
+	fmt.Println("resolverAddr: ", resolverAddr)
 
 	// fmt.Println(GenDnsHeaderResponse(NewDnsHeader()))
 	// dnsMessage := DnsMessage{
@@ -48,6 +48,17 @@ func main() {
 		return
 	}
 	defer udpConn.Close()
+
+	forwardAddr, err := net.ResolveUDPAddr("udp", resolverAddr)
+	if err != nil {
+		fmt.Println("Failed to resolve UDP address of resolver", err)
+		return
+	}
+	resolverConn, err := net.DialUDP("udp", nil, forwardAddr)
+	if err != nil {
+		return
+	}
+	defer resolverConn.Close()
 
 	// var forwardAddr *net.UDPAddr
 	// var dialConn *net.UDPConn
@@ -88,8 +99,8 @@ func main() {
 		}
 
 		if resolverAddr != "" {
-			fmt.Println("buffer: ", buf)
-			rDnsReceived, _ := ForwardRequest(buf[:], resolverAddr)
+			fmt.Println("buffer len: ", len(buf))
+			rDnsReceived, _ := ForwardRequest(buf[:], resolverConn)
 			dnsMessage.ans = rDnsReceived.ans
 		}
 
@@ -110,9 +121,9 @@ func main() {
 		} else {
 			x = 128
 		}
-		fmt.Println(x)
+		// fmt.Println(x)
 		dnsMessage.hdr.flags = [2]byte{byte((opcode << 3) | x), rcode}
-		fmt.Printf("\t-->>%x\n", dnsMessage.hdr.flags)
+		// fmt.Printf("\t-->>%x\n", dnsMessage.hdr.flags)
 
 		// respName := DecodeName(buf[12:])
 		// respName := ParseCompressed(buf[:])
@@ -122,9 +133,9 @@ func main() {
 		dnsMessage.hdr.qdcount = qdcount
 		dnsMessage.hdr.ancount = qdcount
 
-		fmt.Println(qdcount)
+		// fmt.Println(qdcount)
 		for i := uint16(0); i < qdcount; i++ {
-			fmt.Println("-0-0-0-0-0-", i)
+			fmt.Println("appending ques in dnsMessage, i = ", i)
 			ques := NewQuestion()
 			ques.name = dnsReceived.ques[i].name
 			dnsMessage.ques = append(dnsMessage.ques, ques)
@@ -143,7 +154,7 @@ func main() {
 		}
 
 		for i := uint16(0); resolverAddr == "" && i < qdcount; i++ {
-			fmt.Println("c0c0c0c0c0c0", i)
+			fmt.Println("appending ans in dnsMessage, i = ", i)
 			ans := NewAnswer()
 			ans.name = dnsReceived.ques[i].name
 			dnsMessage.ans = append(dnsMessage.ans, ans)
@@ -155,7 +166,8 @@ func main() {
 		response := GenDnsRespone(dnsMessage)
 		// response := []byte{}
 		// fmt.Printf("%x\n", response)
-		fmt.Println("dns response: ", response, len(response))
+		// fmt.Println("dns response: ", response, len(response))
+		fmt.Println("dns response len: ", len(response))
 
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
@@ -164,20 +176,20 @@ func main() {
 	}
 }
 
-func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
+func ForwardRequest(request []byte, resolverConn *net.UDPConn) (DnsMessage, error) {
 	dnsMessage := DnsMessage{}
 	response := make([]byte, 512)
 
-	forwardAddr, err := net.ResolveUDPAddr("udp", resolverAddr)
-	if err != nil {
-		fmt.Println("Failed to resolve UDP address of resolver", err)
-		return dnsMessage, err
-	}
-	conn, err := net.DialUDP("udp", nil, forwardAddr)
-	if err != nil {
-		return dnsMessage, err
-	}
-	defer conn.Close()
+	// forwardAddr, err := net.ResolveUDPAddr("udp", resolverAddr)
+	// if err != nil {
+	// 	fmt.Println("Failed to resolve UDP address of resolver", err)
+	// 	return dnsMessage, err
+	// }
+	// conn, err := net.DialUDP("udp", nil, forwardAddr)
+	// if err != nil {
+	// 	return dnsMessage, err
+	// }
+	// defer conn.Close()
 
 	// for {
 	// 	_, err = conn.WriteToUDP(request, forwardAddr)
@@ -196,19 +208,20 @@ func ForwardRequest(request []byte, resolverAddr string) (DnsMessage, error) {
 	//
 	// }
 
-	_, err = conn.Write(request)
+	_, err := resolverConn.Write(request)
 	if err != nil {
 		return dnsMessage, err
 	}
 
 	// time.Sleep(time.Millisecond * 1000)
-	n, err := conn.Read(response)
+	n, err := resolverConn.Read(response)
 	// _, _, err = conn.ReadFromUDP(response)
 	if err != nil {
 		return dnsMessage, err
 	}
 
-	fmt.Println(n,"resolver response: ", response)
+	// fmt.Println(n, "resolver response: ", response)
+	fmt.Println("number of bytes read from resolver", n)
 	dnsMessage = DecodeDnsResponseWithAnswer(response)
 	// fmt.Println("\n\n------", dnsMessage, "\n\n------")
 	// fmt.Println("*(***((y)))", dnsMessage.ans)
