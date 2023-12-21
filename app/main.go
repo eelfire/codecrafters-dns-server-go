@@ -173,7 +173,7 @@ func main() {
 					tmpBuf := GenDnsResponeWithoutAns(tmpMsg)
 					// tmpBuf[0:12] = buf[0:12]
 					copy(tmpBuf[0:12], buf[0:12])
-					tmpBuf[4] = 1
+					tmpBuf[5] = 1
 					fmt.Println("ith: ", i, "tmpBuf: ", tmpBuf)
 
 					rDnsReceived, _ := ForwardRequest(tmpBuf[:], resolverConn)
