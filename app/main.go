@@ -171,6 +171,8 @@ func main() {
 					tmpMsg.hdr.ancount = 0
 					tmpMsg.ques = append(tmpMsg.ques, dnsMessage.ques[i])
 					tmpBuf := GenDnsResponeWithoutAns(tmpMsg)
+					// tmpBuf[0:12] = buf[0:12]
+					copy(tmpBuf[0:12], buf[0:12])
 
 					rDnsReceived, _ := ForwardRequest(tmpBuf[:], resolverConn)
 					dnsMessage.ans = append(dnsMessage.ans, rDnsReceived.ans...)
