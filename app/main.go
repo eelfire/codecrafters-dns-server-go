@@ -98,12 +98,6 @@ func main() {
 			ans:  []Answer{},
 		}
 
-		if resolverAddr != "" {
-			fmt.Println("buffer len: ", len(buf))
-			rDnsReceived, _ := ForwardRequest(buf[:], resolverConn)
-			dnsMessage.ans = rDnsReceived.ans
-		}
-
 		// need to improve this very much
 		dnsMessage.hdr.id = binary.BigEndian.Uint16(buf[0:2])
 		// mask := // 01111001 00000000
@@ -158,6 +152,30 @@ func main() {
 			ans := NewAnswer()
 			ans.name = dnsReceived.ques[i].name
 			dnsMessage.ans = append(dnsMessage.ans, ans)
+		}
+
+		if resolverAddr != "" {
+			if qdcount <= 1 {
+				fmt.Println("buffer len: ", len(buf))
+				rDnsReceived, _ := ForwardRequest(buf[:], resolverConn)
+				dnsMessage.ans = rDnsReceived.ans
+			} else {
+				for i := uint16(0); i < qdcount; i++ {
+					tmpMsg := DnsMessage{
+						hdr:  NewHeader(),
+						ques: []Question{},
+						ans:  []Answer{},
+					}
+					tmpMsg.hdr = dnsMessage.hdr
+					tmpMsg.hdr.qdcount = 1
+					tmpMsg.ques = append(tmpMsg.ques, dnsMessage.ques[i])
+					tmpBuf := GenDnsRespone(tmpMsg)
+
+					rDnsReceived, _ := ForwardRequest(tmpBuf[:], resolverConn)
+					dnsMessage.ans = append(dnsMessage.ans, rDnsReceived.ans...)
+				}
+			}
+
 		}
 
 		// fmt.Println("\n\n----0o0o0o0o--\n", dnsMessage, "\n\n---0o0o0o0o---")
